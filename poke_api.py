@@ -1,5 +1,6 @@
 import requests as rq
 import image_lib
+import os
 
 POKE_API_URL = 'https://pokeapi.co/api/v2/pokemon'
 
@@ -38,8 +39,22 @@ def search_pokemon(search_term):
     return 
 
 def get_pokemon_names(limit=10000, offset=0):
+    """Gets every pokemon from PokeAPI and returns 
+    a list ofnames
+
+    Args:
+        limit (int, optional): Set a maximum number of pokemon to request. Defaults to 10000 for all pokemon.
+        offset (int, optional): The starting index for the API to return results for. Defaults to 0 for the beginning/all.
+
+    Returns:
+        poke_name_list (list): A list of strings, all pokemon names 
+    """
+
+    # PokeAPI Request
     response = rq.get(f"{POKE_API_URL}?limit={limit}&offset={offset}")
 
+    # Prints status of request
+    # If request successful, format and return all pokemon names
     if response.ok:
         print('Success!')
         resp_dict = response.json()
@@ -52,21 +67,38 @@ def get_pokemon_names(limit=10000, offset=0):
     return
 
 def download_pokemon_artwork(pokemon, dir):
+    """Given a specified pokemon and directory, downloads and saves an image from a sprite URL proided by PokeAPI to a resource image directory within the specified directory.
 
+    Args:
+        pokemon (str): The name of the pokemon
+        dir (str): The path of the script directory
+
+    Returns:
+        str: The full path of the saved image
+    """
+
+    # Get a dictionary of info of the selected pokemon and checks success
     poke_dict = search_pokemon(pokemon)
     if poke_dict == None:
         return False
 
+    # Determine sprite URL from info, download the image and checks success
     img_url = poke_dict['sprites']['other']['official-artwork']['front_shiny']
-
     img_data = image_lib.download_image(img_url)
     if img_data == None:
         return False
 
-    img_path = f"{dir}\\{poke_dict['name']}.{img_url.split('.')[-1]}"
+    # Creates an image resource directory within the 
+    # given (script) directory, if doesnt exist
+    img_dir = os.path.join(dir, 'pokemon_images')
+    if not os.path.exists(img_dir):
+        os.mkdir(img_dir)
 
+    # Construct the file path of the img file to save,
+    # then save the image data, and checks success
+    img_path = f"{img_dir}\\{poke_dict['name']}.{img_url.split('.')[-1]}"
     if image_lib.save_image_file(img_data, img_path):
-        return img_path
+        return img_path # Returns saved image path
     return False
 
 if __name__ == '__main__':
